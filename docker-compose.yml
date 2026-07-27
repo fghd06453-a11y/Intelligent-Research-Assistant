@@ -1,0 +1,174 @@
+# ============================================================
+# 智能研究系统 — 开发环境数据库容器
+# 一键启动命令: docker compose up -d
+# ============================================================
+version: "3.8"
+
+services:
+  # ==================== Redis ====================
+  redis:
+    image: bitnami/redis:latest
+    container_name: redis
+    restart: unless-stopped
+    environment:
+      REDIS_USERNAME: root
+      REDIS_PASSWORD: Yoxxxxxx
+    ports:
+      - "6379:6379"
+    networks:
+      - deep-research-net
+
+  # ==================== PostgreSQL ====================
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: Yxxxxxx
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - deep-research-net
+
+  # ==================== MySQL ====================
+  mysql8:
+    image: mysql:8.0
+    container_name: mysql8
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: RootPass123!
+      MYSQL_DATABASE: mydb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - deep-research-net
+
+  # ==================== Neo4j ====================
+  neo4j:
+    image: neo4j:5.18.0
+    container_name: neo4j
+    restart: always
+    environment:
+      NEO4J_AUTH: neo4j/Yong7623822
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    networks:
+      - deep-research-net
+
+  # ==================== etcd (Milvus 依赖) ====================
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.18
+    container_name: milvus-etcd
+    restart: unless-stopped
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - etcd-data:/etcd
+    command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    networks:
+      - deep-research-net
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # ==================== MinIO (Milvus 依赖) ====================
+  minio:
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    container_name: milvus-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    networks:
+      - deep-research-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # ==================== Milvus 向量数据库 ====================
+  milvus-standalone:
+    image: milvusdb/milvus:v2.5.7
+    container_name: milvus-standalone
+    restart: unless-stopped
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+      MINIO_ACCESS_KEY_ID: minioadmin
+      MINIO_SECRET_ACCESS_KEY: minioadmin
+    volumes:
+      - milvus-data:/var/lib/milvus/data
+      - milvus-logs:/var/lib/milvus/logs
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    depends_on:
+      etcd:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - deep-research-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+
+  # ==================== Attu (Milvus 管理界面) ====================
+  attu:
+    image: zilliz/attu:v2.5.7
+    container_name: attu
+    restart: unless-stopped
+    environment:
+      MILVUS_URL: milvus-standalone:19530
+    ports:
+      - "8080:3000"
+    depends_on:
+      milvus-standalone:
+        condition: service_healthy
+    networks:
+      - deep-research-net
+
+# ==================== 持久化卷 ====================
+volumes:
+  postgres-data:
+  mysql-data:
+  neo4j-data:
+  neo4j-logs:
+  etcd-data:
+  minio-data:
+  milvus-data:
+  milvus-logs:
+
+# ==================== 网络 ====================
+networks:
+  deep-research-net:
+    driver: bridge
