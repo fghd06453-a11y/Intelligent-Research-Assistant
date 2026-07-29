@@ -5,18 +5,18 @@
 version: "3.8"
 
 services:
-  # ==================== Redis ====================
-  redis:
-    image: bitnami/redis:latest
-    container_name: redis
-    restart: unless-stopped
-    environment:
-      REDIS_USERNAME: root
-      REDIS_PASSWORD: Yoxxxxxx
-    ports:
-      - "6379:6379"
-    networks:
-      - deep-research-net
+  # ==================== Redis（备用，PG 可用时不需启动）====================
+  # redis:
+  #   image: bitnami/redis:latest
+  #   container_name: redis
+  #   restart: unless-stopped
+  #   environment:
+  #     REDIS_USERNAME: root
+  #     REDIS_PASSWORD: Yoxxxxxx
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - deep-research-net
 
   # ==================== PostgreSQL ====================
   postgres:
@@ -34,37 +34,37 @@ services:
     networks:
       - deep-research-net
 
-  # ==================== MySQL ====================
-  mysql8:
-    image: mysql:8.0
-    container_name: mysql8
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: RootPass123!
-      MYSQL_DATABASE: mydb
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-    networks:
-      - deep-research-net
+  # ==================== MySQL（备用，暂不启用）====================
+  # mysql8:
+  #   image: mysql:8.0
+  #   container_name: mysql8
+  #   restart: unless-stopped
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: RootPass123!
+  #     MYSQL_DATABASE: mydb
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+  #   networks:
+  #     - deep-research-net
 
-  # ==================== Neo4j ====================
-  neo4j:
-    image: neo4j:5.18.0
-    container_name: neo4j
-    restart: always
-    environment:
-      NEO4J_AUTH: neo4j/Yong7623822
-      NEO4J_PLUGINS: '["apoc"]'
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    volumes:
-      - neo4j-data:/data
-      - neo4j-logs:/logs
-    networks:
-      - deep-research-net
+  # ==================== Neo4j（备用，暂不启用）====================
+  # neo4j:
+  #   image: neo4j:5.18.0
+  #   container_name: neo4j
+  #   restart: always
+  #   environment:
+  #     NEO4J_AUTH: neo4j/Yong7623822
+  #     NEO4J_PLUGINS: '["apoc"]'
+  #   ports:
+  #     - "7474:7474"
+  #     - "7687:7687"
+  #   volumes:
+  #     - neo4j-data:/data
+  #     - neo4j-logs:/logs
+  #   networks:
+  #     - deep-research-net
 
   # ==================== etcd (Milvus 依赖) ====================
   etcd:
@@ -160,13 +160,13 @@ services:
 # ==================== 持久化卷 ====================
 volumes:
   postgres-data:
-  mysql-data:
-  neo4j-data:
-  neo4j-logs:
   etcd-data:
   minio-data:
   milvus-data:
   milvus-logs:
+  # mysql-data:
+  # neo4j-data:
+  # neo4j-logs:
 
 # ==================== 网络 ====================
 networks:
