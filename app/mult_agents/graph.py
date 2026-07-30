@@ -84,4 +84,6 @@ def build_app(agents, checkpointer):
     workflow.add_edge("direct_answer", END)
     workflow.add_edge("write", END)
     
-    return workflow.compile(checkpointer=checkpointer)
+    return workflow.compile(checkpointer=checkpointer)    # compile函数检查工作流合法性，每个节点之间逻辑合法性，同时绑定checkpointer
+                                                            #langgraph 框架在每个节点执行完后自动checkpointer，保存一次ResearchState
+                                                             #可以随时恢复任务和回溯

@@ -57,7 +57,7 @@ def build_checkpointer(config: AppConfig):
         postgres_saver = None
         postgres_import_error = ""
         try:
-            module = importlib.import_module("langgraph.checkpoint.postgres")
+            module = importlib.import_module("langgraph.checkpoint.postgres")   #动态导入 langgraph.checkpoint.postgres 模块
             postgres_saver = getattr(module, "PostgresSaver", None)
         except Exception as exc:
             postgres_import_error = str(exc)

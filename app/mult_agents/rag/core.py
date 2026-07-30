@@ -32,7 +32,7 @@ class RAGConfig:
 
 class RAGSystem:
     def __init__(self, api_key: str, config: Optional[RAGConfig] = None):
-        self.config = config or RAGConfig()
+        self.config = config or RAGConfig()    #RAGConfig() 实例是对象
         self.api_key = api_key
         self.embeddings = DashScopeEmbeddings(
             model=self.config.embedding_model,
